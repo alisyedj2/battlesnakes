@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
-
+import java.util.*;
 enum Moves {
     up, down, left, right
 }
@@ -32,7 +32,7 @@ public class snake {
     private Coord head;
     private Coord[] body;
     private List<String> possibleMoves;
-    private boolean hazards[][];
+    private Boolean hazards[][];
 
     
     @GET
@@ -60,42 +60,24 @@ public class snake {
         head = state.you().head();
         body = state.you().body();
 
-        possibleMoves = new ArrayList<String>(Arrays.asList("up","down","left","right"));
-        hazards = new boolean[11][11];
+        hazards = new Boolean[11][11];
 
         for(Battlesnake snake : state.board().snakes()){
             for (Coord part : snake.body()){
                 hazards[part.x()][part.y()] = true;
             }
         }
-
-        avoidObstacles();
-
-        Coord[] food = state.board().food();
-        int minimumDistance = Integer.MAX_VALUE;
-
-        int finalfoodx = 0;
-        int finalfoody = 0;
         
-        for(Coord foodCoord : food){
+        for(Coord foodCoord : state.board().food()){
             int foodx = foodCoord.x();
             int foody = foodCoord.y();
-            int distance = Math.abs(head.x() - foodx) + Math.abs(head.y() - foody);
-            if(distance < minimumDistance){
-                minimumDistance = distance;
-                finalfoodx = foodx;
-                finalfoody = foody;
-            }
+            hazards[foodx][foody] = false;
         }
 
-        String direction = possibleMoves.get(0);
+        String direction = bfs();
         
-        if(finalfoodx < head.x() && possibleMoves.contains("left")) direction = "left";
-        else if(finalfoodx > head.x() && possibleMoves.contains("right")) direction = "right";
-        else if(finalfoody < head.y() && possibleMoves.contains("down")) direction = "down";
-        else if(finalfoody > head.y() && possibleMoves.contains("up")) direction = "up";
-        
-        Move move = new Move(direction);
+        Move move = new Move(direction,head.toString());
+        log.infof("%s MOVE %s", state.game().id(), move);
         return move;
     }
 
@@ -105,19 +87,37 @@ public class snake {
         log.infof("%s END", state.game().id());
     }
 
-    public void avoidObstacles(){
-        if (head.x() == 0 || hazards[head.x() - 1][head.y()]){
-            possibleMoves.remove("left");
+    private String bfs(){
+        Queue<Coord> queue = new LinkedList<>();
+        HashMap<Coord,String> directions = new HashMap<>();
+        queue.add(head);
+        while(queue.size() > 0){
+            head = queue.poll();
+            if(new Boolean(false).equals(hazards[head.x()][head.y()])){
+                return directions.get(head);
+            }
+            if(head.x() > 0 && !new Boolean(true).equals(hazards[head.x()-1][head.y()])){
+                Coord temp = new Coord(head.x()-1,head.y());
+                queue.add(temp);
+                directions.put(temp,directions.getOrDefault(head,"left"));
+            }
+            if(head.x() <10 && !new Boolean(true).equals(hazards[head.x()+1][head.y()])){
+                Coord temp = new Coord(head.x()+1, head.y());
+                queue.add(temp);
+                directions.put(temp,directions.getOrDefault(head,"right"));
+            }
+            if(head.y() >0 && !new Boolean(true).equals(hazards[head.x()][head.y()-1])){
+                Coord temp = new Coord(head.x(), head.y()-1);
+                queue.add(temp);
+                directions.put(temp,directions.getOrDefault(head, "down"));
+            }
+            if(head.y() < 10 && !new Boolean(true).equals(hazards[head.x()][head.y()+1])){
+                Coord temp = new Coord(head.x(), head.y()+1);
+                queue.add(temp);
+                directions.put(temp,directions.getOrDefault(head, "up"));
+            }
         }
-        if (head.x() == hazards.length-1 || hazards[head.x() + 1][head.y()]){
-            possibleMoves.remove("right");
-        }
-        if (head.y() == 0 || hazards[head.x()][head.y() - 1]){
-            possibleMoves.remove("down");
-        }
-        if (head.y() == hazards.length-1 || hazards[head.x()][head.y() + 1]){
-            possibleMoves.remove("up");
-        }
+        return "left";
     }
 }
 
