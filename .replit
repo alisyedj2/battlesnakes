@@ -1,2 +1,13 @@
 language = "nix"
 run = "jbang snake.java"
+modules = ["java-graalvm22.3", "nix"]
+
+[deployment]
+run = ["sh", "-c", "jbang snake.java"]
+
+[nix]
+channel = "stable-24_05"
+
+[[ports]]
+localPort = 8080
+externalPort = 80
