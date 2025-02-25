@@ -33,10 +33,12 @@ public class snake {
     private Coord[] body;
     private List<String> possibleMoves;
     private Boolean hazards[][];
+    int count;
 
     
     @GET
     public Info info() {
+        count = 0;
         log.infof("INFO");
         return new Info("1",
                 "alisyed",
@@ -56,7 +58,7 @@ public class snake {
     @POST
     @Path("/move")
     public Move move(GameState state) {
-
+        System.out.println("move");
         head = state.you().head();
         body = state.you().body();
 
@@ -77,7 +79,7 @@ public class snake {
         String direction = bfs();
         
         Move move = new Move(direction,head.toString());
-        log.infof("%s MOVE %s", state.game().id(), move);
+        System.out.println(move.toString());
         return move;
     }
 
@@ -88,34 +90,47 @@ public class snake {
     }
 
     private String bfs(){
+        try{
+        System.out.println(count++);
         Queue<Coord> queue = new LinkedList<>();
         HashMap<Coord,String> directions = new HashMap<>();
-        queue.add(head);
+        boolean visited[][] = new boolean[11][11];
+        Coord tempHead = head;
+        queue.add(tempHead);
+        visited[tempHead.x()][tempHead.y()] = true;
         while(queue.size() > 0){
-            head = queue.poll();
-            if(new Boolean(false).equals(hazards[head.x()][head.y()])){
-                return directions.get(head);
+            tempHead = queue.poll();
+            if(new Boolean(false).equals(hazards[tempHead.x()][tempHead.y()])){
+                return directions.get(tempHead);
             }
-            if(head.x() > 0 && !new Boolean(true).equals(hazards[head.x()-1][head.y()])){
-                Coord temp = new Coord(head.x()-1,head.y());
+            if(tempHead.x() > 0 && !visited[tempHead.x()-1][tempHead.y()] && !new Boolean(true).equals(hazards[tempHead.x()-1][tempHead.y()])){
+                visited[tempHead.x()-1][tempHead.y()] = true;
+                Coord temp = new Coord(tempHead.x()-1,tempHead.y());
                 queue.add(temp);
-                directions.put(temp,directions.getOrDefault(head,"left"));
+                directions.put(temp,directions.getOrDefault(tempHead,"left"));
             }
-            if(head.x() <10 && !new Boolean(true).equals(hazards[head.x()+1][head.y()])){
-                Coord temp = new Coord(head.x()+1, head.y());
+            if(tempHead.x() <10 && !visited[tempHead.x()+1][tempHead.y()] && !new Boolean(true).equals(hazards[tempHead.x()+1][tempHead.y()])){
+                visited[tempHead.x()+1][tempHead.y()] = true;
+                Coord temp = new Coord(tempHead.x()+1, tempHead.y());
                 queue.add(temp);
-                directions.put(temp,directions.getOrDefault(head,"right"));
+                directions.put(temp,directions.getOrDefault(tempHead,"right"));
             }
-            if(head.y() >0 && !new Boolean(true).equals(hazards[head.x()][head.y()-1])){
-                Coord temp = new Coord(head.x(), head.y()-1);
+            if(tempHead.y() >0 && !visited[tempHead.x()][tempHead.y()-1] && !new Boolean(true).equals(hazards[tempHead.x()][tempHead.y()-1])){
+                visited[tempHead.x()][tempHead.y()-1] = true;
+                Coord temp = new Coord(tempHead.x(), tempHead.y()-1);
                 queue.add(temp);
-                directions.put(temp,directions.getOrDefault(head, "down"));
+                directions.put(temp,directions.getOrDefault(tempHead, "down"));
             }
-            if(head.y() < 10 && !new Boolean(true).equals(hazards[head.x()][head.y()+1])){
-                Coord temp = new Coord(head.x(), head.y()+1);
+            if(tempHead.y() < 10 && !visited[tempHead.x()][tempHead.y()+1] && !new Boolean(true).equals(hazards[tempHead.x()][tempHead.y()+1])){
+                visited[tempHead.x()][tempHead.y()+1] = true;
+                Coord temp = new Coord(tempHead.x(), tempHead.y()+1);
                 queue.add(temp);
-                directions.put(temp,directions.getOrDefault(head, "up"));
+                directions.put(temp,directions.getOrDefault(tempHead, "up"));
             }
+        }
+        }
+        catch(Exception e){
+            System.out.println("Exception\n"+e);
         }
         return "left";
     }
